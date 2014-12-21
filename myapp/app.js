@@ -51,13 +51,13 @@ app.configure('production', function () {
 // Routes
 
 app.get('/', function (req, res) {
-        res.render('index.ejs');
+    res.render('index.ejs');
 });
 
 app.get('/page', function (req, res, angApp) {
     console.log(angApp);
     res.render('index.ejs',
-        {conString : "Hi there"}
+        {conString: "Hi there"}
     );
 
 });
@@ -76,7 +76,7 @@ function getData(req, res) {
 };
 
 function getDataParams(req, res) {
-    var query = client.query("SELECT * from " + req.params.entity + " WHERE " +  req.params.col + " = " + req.params.param);
+    var query = client.query("SELECT * from " + req.params.entity + " WHERE " + req.params.col + " = " + req.params.param);
     query.on("row", function (row, result) {
         result.addRow(row);
     });
@@ -90,7 +90,7 @@ function getDataParams(req, res) {
 
 function playersIn(req, res) {
     var query = client.query("SELECT * from player LEFT JOIN football_club ON " +
-        "player.football_club_id = football_club.id WHERE football_club.name = " + "'" + req.params.name + "'");
+        "player.football_club_id = football_club.club_id WHERE football_club.name = " + "'" + req.params.name + "'");
     query.on("row", function (row, result) {
         result.addRow(row);
     });
@@ -103,15 +103,38 @@ function playersIn(req, res) {
 };
 
 function addMatch(req, res) {
+    
     console.log(req.body);
-    var pre = "INSERT INTO match(date,guest_team_id,host_team_id,tournament, host_win) " +
-        "VALUES ('" + req.body.matchDate + "', '" + req.body.teamGuest.id + "', '" +
-        req.body.teamHost.id + "', '" + req.body.tournament + "', '" + req.body.hostWin + "')";
-    console.log(pre);
 
     var query = client.query("INSERT INTO match(date,guest_team_id,host_team_id,tournament, host_win) " +
-        "VALUES ('" + req.body.matchDate + "', '" + req.body.teamGuest.id + "', '" +
-        req.body.teamHost.id + "', '" + req.body.tournament + "', '" + req.body.hostWin + "')");
+        "VALUES ('" + req.body.matchDate + "', '" + req.body.teamGuest.club_id + "', '" +
+        req.body.teamHost.club_id + "', '" + req.body.tournament + "', '" + req.body.hostWin + "')");
+
+    var match_id = 0;
+
+    query = client.query("select id from match where date = '" + req.body.matchDate + "' and guest_team_id = "
+        + req.body.teamGuest.club_id + " and host_team_id = " + req.body.teamHost.club_id);
+
+    query.on("row", function (row, result) {
+        result.addRow(row);
+    });
+
+    query.on("end",function (result) {
+        match_id = result.rows[0].id;
+        console.log(match_id);
+
+        req.body.hostPlayers.forEach(function (element, index, array) {
+            query = client.query("INSERT INTO individual(player_id, match_id, rating, red_cards, yellow_cards," +
+                " in_host_team) VALUES ('" + element.id + "', '" + match_id + "', '" +
+                element.rating + "', '" + element.red_cards + "', '" + element.yellow_cards + "', " + true + ")");
+        })
+
+        req.body.guestPlayers.forEach(function (element, index, array) {
+            query = client.query("INSERT INTO individual(player_id, match_id, rating, red_cards, yellow_cards," +
+                " in_host_team) VALUES ('" + element.id + "', '" + match_id + "', '" +
+                element.rating + "', '" + element.red_cards + "', '" + element.yellow_cards + "', " + false + ")");
+        })
+    })
 
     res.end();
 
