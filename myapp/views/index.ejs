@@ -2,12 +2,12 @@
     <form class="col-md-12">
         <div class="row">
             <select ng-model="match.selectedTournament" class="form-control"
-                    ng-options="tournament for tournament in tournament">
+                    ng-options="tournament for tournament in tournament" required>
                 <option value="">Турнир</option>
             </select>
         </div>
         <div class="row">
-            <input type="date" class="form-control" ng-model="match.date"/>
+            <input type="date" class="form-control" ng-model="match.date" required/>
         </div>
         <div class="row">
             <div class="col-md-6">
@@ -16,7 +16,7 @@
                 </div>
                 <div class="row">
                     <select class="form-control" ng-model="match.host" ng-options="team.name for team in teams"
-                            ng-change="match.getPlayers(match.host.name, 1)">
+                            ng-change="match.getPlayers(match.host.name, 1)" required style="margin-bottom: 10px">
                         <option value="">Хозяева</option>
                     </select>
                 </div>
@@ -78,17 +78,17 @@
 
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6" style="background: rgba(1,1,1,0.1); border-radius: 5px">
                 <div class="row">
                     <h1 class="text-center" ng-bind="match.scoreGuest"></h1>
                 </div>
                 <div class="row">
                     <select ng-model="match.guest" class="form-control" ng-options="team.name for team in teams"
-                            ng-change="match.getPlayers(match.guest.name, 0)">
+                            ng-change="match.getPlayers(match.guest.name, 0)" required style="margin-bottom: 10px">
                         <option value="">Гости</option>
                     </select>
                 </div>
-                <div class="row" ng-repeat="player in GuestPlayers" style="background: rgba(1,1,1,0.1)">
+                <div class="row" ng-repeat="player in GuestPlayers" >
                     <div class="col-md-12">
                         <div class="row" style="padding-bottom: 10px">
                             <div class="col-md-1">
@@ -146,5 +146,7 @@
                 </div>
             </div>
         </div>
+        <input type="submit" class="btn-success form-control" style="margin-top: 20px"
+                ng-click="match.submit()"/>
     </form>
 </div>

@@ -25,8 +25,6 @@ client.connect(function (err) {
     });
 });
 
-
-
 var app = module.exports = express.createServer();
 
 // Configuration
@@ -42,9 +40,6 @@ app.configure(function () {
     app.use(express.static(__dirname + '/node_modules'));
 });
 
-
-
-
 app.configure('development', function () {
     app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
@@ -56,14 +51,7 @@ app.configure('production', function () {
 // Routes
 
 app.get('/', function (req, res) {
-    var query = client.query("SELECT * from match");
-    query.on("row", function (row, result) {
-        result.addRow(row);
-    });
-    query.on("end", function (result) {
-        res.render('index.ejs', {conString: result.rows[0].id});
-    });
-
+        res.render('index.ejs');
 });
 
 app.get('/page', function (req, res, angApp) {
@@ -114,9 +102,25 @@ function playersIn(req, res) {
 
 };
 
+function addMatch(req, res) {
+    console.log(req.body);
+    var pre = "INSERT INTO match(date,guest_team_id,host_team_id,tournament, host_win) " +
+        "VALUES ('" + req.body.matchDate + "', '" + req.body.teamGuest.id + "', '" +
+        req.body.teamHost.id + "', '" + req.body.tournament + "', '" + req.body.hostWin + "')";
+    console.log(pre);
+
+    var query = client.query("INSERT INTO match(date,guest_team_id,host_team_id,tournament, host_win) " +
+        "VALUES ('" + req.body.matchDate + "', '" + req.body.teamGuest.id + "', '" +
+        req.body.teamHost.id + "', '" + req.body.tournament + "', '" + req.body.hostWin + "')");
+
+    res.end();
+
+};
+
 app.get('/api/:entity', getData);
 app.get('/api/:entity/:col/:param', getDataParams);
 app.get('/api/players_in/:name', playersIn);
+app.post('/api/add_match', addMatch);
 
 app.listen(3000, function () {
     console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);

@@ -8,9 +8,6 @@ function matchController($http, $scope) {
     this.scoreGuest = 0;
     $scope.yellow_cards = [0, 1, 2];
     $scope.red_cards = [0, 1];
-    
-
-    console.log($scope.yellow_cards);
 
     this.getData = function () {
         $http.get('/api/match/').
@@ -40,41 +37,67 @@ function matchController($http, $scope) {
                         element.rating = 6.5;
                         element.yellow_cards = 0;
                         element.red_cards = 0;
-                        
+
                     })
 
                     if (isHost) {
                         $scope.HostPlayers = data.result;
-                    }else{
+                        console.log($scope.HostPlayers);
+                    } else {
                         $scope.GuestPlayers = data.result;
                     }
                 });
         }
     }
 
-    this.addGoal = function(goalsArr, isHost){
+    this.addGoal = function (goalsArr, isHost) {
         var goal = {};
         goal.minute = 45;
         goal.isOwn = false;
         goal.isPenalty = false;
-        if(isHost){
+        if (isHost) {
             this.scoreHost++;
         }
-        else{
+        else {
             this.scoreGuest++;
         }
         goalsArr.push(goal);
     }
 
-    this.updateGoals = function(isOwn, isHost){
-            if(isOwn && isHost || !isOwn && !isHost){
-                this.scoreHost--;
-                this.scoreGuest++;
-            }
-            else{
-                this.scoreHost++;
-                this.scoreGuest--;
-            }
+    this.updateGoals = function (isOwn, isHost) {
+        if (isOwn && isHost || !isOwn && !isHost) {
+            this.scoreHost--;
+            this.scoreGuest++;
+        }
+        else {
+            this.scoreHost++;
+            this.scoreGuest--;
+        }
+    }
+
+    this.submit = function () {
+        // if (this.selectedTournament && this.date && this.host && this.guest) {
+        var hostWin = "no";
+        if (this.scoreGuest < this.scoreHost) {
+            hostWin = "yes";
+        }
+        else if (this.scoreGuest == this.scoreHost) {
+            hostWin = "tie";
+        }
+        var matchParams = {
+            tournament: this.selectedTournament,
+            matchDate: this.date,
+            teamHost: this.host,
+            teamGuest: this.guest,
+            hostWin: hostWin,
+            guestPlayers: $scope.GuestPlayers,
+            hostPlayers: $scope.HostPlayers
+        }
+        console.log($scope.HostPlayers);
+        $http.post('/api/add_match', matchParams).success(function () {
+            console.log("success");
+        });
+        //}
     }
 
     this.getTeams();
