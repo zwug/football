@@ -1,29 +1,81 @@
 <div class="row" ng-controller="matchController as match">
     <form class="col-md-12">
         <div class="row">
-            <select ng-model="match.selectedTournament" ng-options="tournament for tournament in tournament">
+            <select ng-model="match.selectedTournament" class="form-control"
+                    ng-options="tournament for tournament in tournament">
                 <option value="">Турнир</option>
             </select>
         </div>
         <div class="row">
-            <input type="date" ng-model="match.date"/>
+            <input type="date" class="form-control" ng-model="match.date"/>
         </div>
         <div class="row">
             <div class="col-md-6">
                 <div class="row">
-                    <select ng-model="match.host" ng-options="team.name for team in teams" ng-change="match.getPlayers(match.host.name)">
+                    <h1 class="text-center" ng-bind="match.scoreHost"></h1>
+                </div>
+                <div class="row">
+                    <select class="form-control" ng-model="match.host" ng-options="team.name for team in teams"
+                            ng-change="match.getPlayers(match.host.name, 1)">
                         <option value="">Хозяева</option>
                     </select>
                 </div>
-                <div class="row">
+                <div class="row" ng-repeat="player in HostPlayers">
+                    <span ng-bind="player.first_name"></span>
+                    <span ng-bind="player.last_name"></span>
+                    <select ng-model="match.player.yellow_cards" class="form-control"
+                            ng-options="yellow_cards for yellow_cards in yellow_cards">
+                    </select>
+                    <select ng-model="match.player.red_cards" class="form-control"
+                            ng-options="red_cards for red_cards in red_cards">
+                    </select>
+                    <input type="number" step="0.01" class="form-control" ng-model="match.player.rating"/>
+                    <a class="btn btn-default btn-xs" ng-click="match.addGoal(player.goals, 1)">Гол</a>
 
+                    <div class="goal-score col-md-offset-2 col-md-10 well well-sm" ng-repeat="goal in player.goals">
+                        <div class="col-md-2">
+                            <span class="label label-default">Минута</span>
+                        </div>
+                        <div class="col-md-4">
+                            <input class="form-control" type="number" step="1" ng-model="goal.minute"/>
+                        </div>
+                        <div class="col-md-offset-2 col-md-1">
+                                <span class="label label-default">Автогол</span>
+                        </div>
+                        <div class="col-md-3">
+                                <input class="form-control" type="checkbox" ng-model="goal.isOwn"
+                                       ng-change="match.updateGoals(goal.isOwn, 1)" />
+                        </div>
+                    </div>
                 </div>
-
             </div>
             <div class="col-md-6">
-                <select ng-model="match.guest" ng-options="team.name for team in teams">
-                    <option value="">Гости</option>
-                </select>
+                <div class="row">
+                    <h1 class="text-center" ng-bind="match.scoreGuest"></h1>
+                </div>
+                <div class="row">
+                    <select ng-model="match.guest" class="form-control" ng-options="team.name for team in teams"
+                            ng-change="match.getPlayers(match.guest.name, 0)">
+                        <option value="">Гости</option>
+                    </select>
+                </div>
+                <div class="row" ng-repeat="player in GuestPlayers">
+                    <span ng-bind="player.first_name"></span>
+                    <span ng-bind="player.last_name"></span>
+                    <select ng-model="match.player.yellow_cards" class="form-control"
+                            ng-options="yellow_cards for yellow_cards in yellow_cards">
+                    </select>
+                    <select ng-model="match.player.red_cards" class="form-control"
+                            ng-options="red_cards for red_cards in red_cards">
+                    </select>
+                    <input type="number" class="form-control" step="0.01" ng-model="match.player.rating"/>
+                    <a class="btn btn-default btn-xs" ng-click="match.addGoal(player.goals, false)">Гол</a>
+
+                    <div class="goal-score" ng-repeat="goal in player.goals">
+                        <input type="number" step="1" ng-model="goal.minute"/>
+                        <input type="checkbox" ng-model="goal.isOwn"/>
+                    </div>
+                </div>
             </div>
         </div>
     </form>

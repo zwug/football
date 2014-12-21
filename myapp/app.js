@@ -100,8 +100,23 @@ function getDataParams(req, res) {
 
 };
 
+function playersIn(req, res) {
+    var query = client.query("SELECT * from player LEFT JOIN football_club ON " +
+        "player.football_club_id = football_club.id WHERE football_club.name = " + "'" + req.params.name + "'");
+    query.on("row", function (row, result) {
+        result.addRow(row);
+    });
+    query.on("end", function (result) {
+        res.json({
+            result: result.rows
+        });
+    });
+
+};
+
 app.get('/api/:entity', getData);
 app.get('/api/:entity/:col/:param', getDataParams);
+app.get('/api/players_in/:name', playersIn);
 
 app.listen(3000, function () {
     console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
