@@ -1,5 +1,30 @@
-<div class="row">
-    <div class="col-md-6">
-        Hi <%= conString %>
-    </div>
+<div class="row" ng-controller="matchController as match">
+    <form class="col-md-12">
+        <div class="row">
+            <select ng-model="match.selectedTournament" ng-options="tournament for tournament in tournament">
+                <option value="">Турнир</option>
+            </select>
+        </div>
+        <div class="row">
+            <input type="date" ng-model="match.date"/>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row">
+                    <select ng-model="match.host" ng-options="team.name for team in teams" ng-change="match.getPlayers(match.host.name)">
+                        <option value="">Хозяева</option>
+                    </select>
+                </div>
+                <div class="row">
+
+                </div>
+
+            </div>
+            <div class="col-md-6">
+                <select ng-model="match.guest" ng-options="team.name for team in teams">
+                    <option value="">Гости</option>
+                </select>
+            </div>
+        </div>
+    </form>
 </div>

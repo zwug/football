@@ -5,6 +5,7 @@
 var express = require('express')
     , routes = require('./routes');
 
+
 var pg = require("pg");
 
 var conString = "postgresql://zwug:123@localhost:5432/football";
@@ -24,6 +25,8 @@ client.connect(function (err) {
     });
 });
 
+
+
 var app = module.exports = express.createServer();
 
 // Configuration
@@ -38,6 +41,9 @@ app.configure(function () {
     app.use(express.static(__dirname + '/public'));
     app.use(express.static(__dirname + '/node_modules'));
 });
+
+
+
 
 app.configure('development', function () {
     app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
@@ -55,17 +61,47 @@ app.get('/', function (req, res) {
         result.addRow(row);
     });
     query.on("end", function (result) {
-        console.log(JSON.stringify(result.rows, null, "    "));
         res.render('index.ejs', {conString: result.rows[0].id});
     });
 
 });
 
-app.get('/page', function (req, res) {
-    res.render('index',
-        title = "loh"
+app.get('/page', function (req, res, angApp) {
+    console.log(angApp);
+    res.render('index.ejs',
+        {conString : "Hi there"}
     );
+
 });
+
+function getData(req, res) {
+    var query = client.query("SELECT * from " + req.params.entity);
+    query.on("row", function (row, result) {
+        result.addRow(row);
+    });
+    query.on("end", function (result) {
+        res.json({
+            result: result.rows
+        });
+    });
+
+};
+
+function getDataParams(req, res) {
+    var query = client.query("SELECT * from " + req.params.entity + " WHERE " +  req.params.col + " = " + req.params.param);
+    query.on("row", function (row, result) {
+        result.addRow(row);
+    });
+    query.on("end", function (result) {
+        res.json({
+            result: result.rows
+        });
+    });
+
+};
+
+app.get('/api/:entity', getData);
+app.get('/api/:entity/:col/:param', getDataParams);
 
 app.listen(3000, function () {
     console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
