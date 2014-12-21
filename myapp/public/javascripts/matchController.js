@@ -8,10 +8,7 @@ function matchController($http, $scope) {
     this.scoreGuest = 0;
     $scope.yellow_cards = [0, 1, 2];
     $scope.red_cards = [0, 1];
-    this.player = {};
-    this.player.rating = 6.5;
-    this.player.yellow_cards = 0;
-    this.player.red_cards = 0;
+    
 
     console.log($scope.yellow_cards);
 
@@ -40,6 +37,10 @@ function matchController($http, $scope) {
                 success(function (data) {
                     data.result.forEach(function (element, index, array) {
                         element.goals = [];
+                        element.rating = 6.5;
+                        element.yellow_cards = 0;
+                        element.red_cards = 0;
+                        
                     })
 
                     if (isHost) {
@@ -55,6 +56,7 @@ function matchController($http, $scope) {
         var goal = {};
         goal.minute = 45;
         goal.isOwn = false;
+        goal.isPenalty = false;
         if(isHost){
             this.scoreHost++;
         }
@@ -65,7 +67,7 @@ function matchController($http, $scope) {
     }
 
     this.updateGoals = function(isOwn, isHost){
-            if(isOwn){
+            if(isOwn && isHost || !isOwn && !isHost){
                 this.scoreHost--;
                 this.scoreGuest++;
             }
