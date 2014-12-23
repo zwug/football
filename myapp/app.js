@@ -63,9 +63,28 @@ app.get('/goals', function (req, res) {
         res.render('goals.ejs',
             {goalsArr: output }
         );
-        console.log(output);
     })
 });
+
+app.get('/ftable', function (req, res) {
+    var query = client.query("select table1.tournament as competition, table1.date as date, table1.host_win as host_win, " +
+    " table1.name as host, table2.name as guest from " +
+    "(SELECT * FROM match LEFT JOIN football_club on match.host_team_id = football_club.club_id) as table1" +
+    " inner join " +
+    "(SELECT * FROM match LEFT JOIN football_club on match.guest_team_id = football_club.club_id) as table2" +
+    " on table1.id = table2.id");
+    query.on("row", function (row, result) {
+        result.addRow(row);
+    });
+    query.on("end", function (result) {
+        res.render('table.ejs',
+            {goalsArr: result.rows }
+        );
+        console.log(result.rows);
+    });
+
+});
+
 
 function getData(req, res) {
     var query = client.query("SELECT * from " + req.params.entity);
