@@ -1,0 +1,24 @@
+<div class="row">
+    <div class="col-md-12">
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Имя и фамилия</th>
+                <th>Страна</th>
+                <th>Количество голов</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% for(var i = 0; i < goalsArr.length; i++) { %>
+            <tr>
+                <td> <%= i+1 %> </td>
+                <td> <%= goalsArr[i].first_name %> <%= goalsArr[i].last_name %></td>
+                <td> <%= goalsArr[i].country  %> </td>
+                <td> <%= goalsArr[i].goals_scored  %> </td>
+            </tr>
+            <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>

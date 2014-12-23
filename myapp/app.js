@@ -49,15 +49,22 @@ app.configure('production', function () {
 
 // Routes
 
-app.get('/', function (req, res) {
+app.get('/add_match', function (req, res) {
     res.render('index.ejs');
 });
 
-app.get('/page', function (req, res, angApp) {
-    res.render('index.ejs',
-        {conString: "Hi there"}
-    );
+app.get('/', function (req, res) {
+    res.render('home.ejs');
+});
 
+app.get('/goals', function (req, res) {
+    pg.select().table('player').orderBy('goals_scored', 'desc')
+        .then(function (output) {
+        res.render('goals.ejs',
+            {goalsArr: output }
+        );
+        console.log(output);
+    })
 });
 
 function getData(req, res) {
@@ -134,19 +141,19 @@ function addMatch(req, res) {
             guest_team_id: req.body.teamGuest.club_id, host_team_id: req.body.teamHost.club_id,
             tournament: req.body.tournament, host_win: req.body.hostWin
         })
-        .then(function(matchId){
+        .then(function (matchId) {
             insertRecords(matchId, true, req.body.hostPlayers);
             return matchId
         })
-        .then(function (matchId){
+        .then(function (matchId) {
             insertRecords(matchId, false, req.body.guestPlayers);
-        }).then(function(){
+        }).then(function () {
             var query = client.query("update goals set is_penalty =  FALSE where is_penalty = FALSE");
         })
 
 //triggers have odd behaviour
 
-   // var query = client.query("update goals set is_penalty =  FALSE where is_penalty = FALSE");
+    // var query = client.query("update goals set is_penalty =  FALSE where is_penalty = FALSE");
     //res.end();
 
 };

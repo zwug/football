@@ -1,13 +1,18 @@
 <div class="row" ng-controller="matchController as match">
     <form class="col-md-12">
         <div class="row">
-            <select ng-model="match.selectedTournament" class="form-control"
-                    ng-options="tournament for tournament in tournament" required>
-                <option value="">Турнир</option>
-            </select>
+            <div class="col-md-offset-4 col-md-4">
+                <select ng-model="match.selectedTournament" class="form-control"
+                        ng-options="tournament for tournament in tournament" required
+                        style="margin: 10px">
+                    <option value="">Турнир</option>
+                </select>
+            </div>
         </div>
         <div class="row">
-            <input type="date" class="form-control" ng-model="match.date" required/>
+            <div class="col-md-offset-4 col-md-4">
+                <input type="date" class="form-control" ng-model="match.date" required style="margin: 10px"/>
+            </div>
         </div>
         <div class="row">
             <div class="col-md-6">
@@ -88,7 +93,7 @@
                         <option value="">Гости</option>
                     </select>
                 </div>
-                <div class="row" ng-repeat="player in GuestPlayers" >
+                <div class="row" ng-repeat="player in GuestPlayers">
                     <div class="col-md-12">
                         <div class="row" style="padding-bottom: 10px">
                             <div class="col-md-1">
@@ -146,7 +151,9 @@
                 </div>
             </div>
         </div>
-        <input type="submit" class="btn-success form-control" style="margin-top: 20px"
-                ng-click="match.submit()"/>
+        <div class="col-md-offset-4 col-md-4">
+            <input type="submit" class="btn-success form-control" style="margin-top: 20px"
+                   ng-click="match.submit()"/>
+        </div>
     </form>
 </div>
