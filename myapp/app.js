@@ -54,7 +54,6 @@ app.get('/', function (req, res) {
 });
 
 app.get('/page', function (req, res, angApp) {
-    console.log(angApp);
     res.render('index.ejs',
         {conString: "Hi there"}
     );
@@ -88,8 +87,11 @@ function getDataParams(req, res) {
 };
 
 function playersIn(req, res) {
-    var query = client.query("SELECT * from player LEFT JOIN football_club ON " +
-        "player.football_club_id = football_club.club_id WHERE football_club.name = " + "'" + req.params.name + "'");
+    var query = client.query("(SELECT * from player LEFT JOIN football_club ON " +
+        "player.football_club_id = football_club.club_id WHERE football_club.name = " + "'" + req.params.name + "')" +
+        "UNION" +
+        "(SELECT * from player LEFT JOIN football_club ON " +
+        "player.national_team_id = football_club.club_id WHERE football_club.name = " + "'" + req.params.name + "')");
     query.on("row", function (row, result) {
         result.addRow(row);
     });
@@ -102,44 +104,52 @@ function playersIn(req, res) {
 };
 
 function addMatch(req, res) {
+    console.log('===================addMatch====================');
+    var insertRecords = function (matchId, isHost, arrData) {
+        arrData.forEach(function (elementHosts) {
+            return pg('individual')
+                .returning('id')
+                .insert({player_id: elementHosts.id, match_id: matchId[0], rating: elementHosts.rating,
+                    red_cards: elementHosts.red_cards, yellow_cards: elementHosts.yellow_cards,
+                    in_host_team: isHost
+                }).catch(function (error) {
+                    console.error(error);
+                }).then(function (individualId) {
+                    elementHosts.goals.forEach(function (goal) {
+                        return pg('goals')
+                            .insert({minute: goal.minute, is_penalty: goal.isPenalty,
+                                is_own: goal.isOwn, individual_id: individualId[0]
+                            }).catch(function (error) {
+                                console.error(error);
+                            })
+                    })
+                })
+        })
+    }
+
     pg('match')
         .returning('id')
         .insert({
             date: req.body.matchDate.toString(),
             guest_team_id: req.body.teamGuest.club_id, host_team_id: req.body.teamHost.club_id,
             tournament: req.body.tournament, host_win: req.body.hostWin
-        }).then(function (matchId) {
-            req.body.hostPlayers.forEach(function (elementHosts) {
-                console.log(matchId[0]);
-                return pg('individual')
-                    .returning('id')
-                    .insert({player_id: elementHosts.id, match_id: matchId[0], rating: elementHosts.rating,
-                        red_cards: elementHosts.red_cards, yellow_cards: elementHosts.yellow_cards,
-                        in_host_team: true
-                    }).catch(function (error) {
-                        console.error(error);
-                    }).then(function (individualId) {
-                        elementHosts.goals.forEach(function (goal) {
-                            return pg('goals')
-                                .insert({minute: goal.minute, is_penalty: goal.isPenalty,
-                                    is_own: goal.isOwn, individual_id: individualId[0]
-                                }).catch(function (error) {
-                                    console.error(error);
-                                })
-                        })
-                    })
-            })
-        }).then(function () {
-            console.log('1');
+        })
+        .then(function(matchId){
+            insertRecords(matchId, true, req.body.hostPlayers);
+            return matchId
+        })
+        .then(function (matchId){
+            insertRecords(matchId, false, req.body.guestPlayers);
+        }).then(function(){
+            var query = client.query("update goals set is_penalty =  FALSE where is_penalty = FALSE");
         })
 
-//same for guest team and look at triggers
+//triggers have odd behaviour
 
+   // var query = client.query("update goals set is_penalty =  FALSE where is_penalty = FALSE");
+    //res.end();
 
-    res.end();
-
-}
-;
+};
 
 app.get('/api/:entity', getData);
 app.get('/api/:entity/:col/:param', getDataParams);
