@@ -2,7 +2,7 @@
  * Created by zwug on 12/21/14.
  */
 
-function matchController($http, $scope) {
+function matchController($http, $scope, $filter) {
 
     this.scoreHost = 0;
     this.scoreGuest = 0;
@@ -12,7 +12,7 @@ function matchController($http, $scope) {
     this.getData = function () {
         $http.get('/api/match/').
             success(function (data) {
-                $scope.tournament = [];
+                $scope.tournament = ['UEFA Champions League'];
                 data.result.forEach(function (element, index, array) {
                     if ($scope.tournament.indexOf(element.tournament) == -1) {
                         $scope.tournament[index] = element.tournament;
@@ -86,14 +86,13 @@ function matchController($http, $scope) {
         }
         var matchParams = {
             tournament: this.selectedTournament,
-            matchDate: this.date,
+            matchDate: $filter('date')(this.date, 'yyyy-MM-dd'),
             teamHost: this.host,
             teamGuest: this.guest,
             hostWin: hostWin,
             guestPlayers: $scope.GuestPlayers,
             hostPlayers: $scope.HostPlayers
         }
-        console.log($scope.HostPlayers);
         $http.post('/api/add_match', matchParams).success(function () {
             console.log("success");
         });

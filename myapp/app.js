@@ -6,23 +6,22 @@ var express = require('express')
     , routes = require('./routes');
 
 
-var pg = require("pg");
+var pgOld = require("pg");
+
+var pg = require('knex')({
+    client: 'pg',
+    connection: "postgresql://zwug:123@localhost:5432/football",
+    "timezone": "Europe/Moscow"
+});
 
 var conString = "postgresql://zwug:123@localhost:5432/football";
 
-var client = new pg.Client(conString);
+client = new pgOld.Client(conString);
+
 client.connect(function (err) {
     if (err) {
         return console.error('could not connect to postgres', err);
     }
-    client.query('SELECT * from player', function (err, result) {
-        if (err) {
-            return console.error('error running query', err);
-        }
-        console.log(result.rows[0]);
-        //output: Tue Jan 15 2013 19:12:47 GMT-600 (CST)
-        //client.end();
-    });
 });
 
 var app = module.exports = express.createServer();
@@ -103,42 +102,44 @@ function playersIn(req, res) {
 };
 
 function addMatch(req, res) {
-    
-    console.log(req.body);
-
-    var query = client.query("INSERT INTO match(date,guest_team_id,host_team_id,tournament, host_win) " +
-        "VALUES ('" + req.body.matchDate + "', '" + req.body.teamGuest.club_id + "', '" +
-        req.body.teamHost.club_id + "', '" + req.body.tournament + "', '" + req.body.hostWin + "')");
-
-    var match_id = 0;
-
-    query = client.query("select id from match where date = '" + req.body.matchDate + "' and guest_team_id = "
-        + req.body.teamGuest.club_id + " and host_team_id = " + req.body.teamHost.club_id);
-
-    query.on("row", function (row, result) {
-        result.addRow(row);
-    });
-
-    query.on("end",function (result) {
-        match_id = result.rows[0].id;
-        console.log(match_id);
-
-        req.body.hostPlayers.forEach(function (element, index, array) {
-            query = client.query("INSERT INTO individual(player_id, match_id, rating, red_cards, yellow_cards," +
-                " in_host_team) VALUES ('" + element.id + "', '" + match_id + "', '" +
-                element.rating + "', '" + element.red_cards + "', '" + element.yellow_cards + "', " + true + ")");
+    pg('match')
+        .returning('id')
+        .insert({
+            date: req.body.matchDate.toString(),
+            guest_team_id: req.body.teamGuest.club_id, host_team_id: req.body.teamHost.club_id,
+            tournament: req.body.tournament, host_win: req.body.hostWin
+        }).then(function (matchId) {
+            req.body.hostPlayers.forEach(function (elementHosts) {
+                console.log(matchId[0]);
+                return pg('individual')
+                    .returning('id')
+                    .insert({player_id: elementHosts.id, match_id: matchId[0], rating: elementHosts.rating,
+                        red_cards: elementHosts.red_cards, yellow_cards: elementHosts.yellow_cards,
+                        in_host_team: true
+                    }).catch(function (error) {
+                        console.error(error);
+                    }).then(function (individualId) {
+                        elementHosts.goals.forEach(function (goal) {
+                            return pg('goals')
+                                .insert({minute: goal.minute, is_penalty: goal.isPenalty,
+                                    is_own: goal.isOwn, individual_id: individualId[0]
+                                }).catch(function (error) {
+                                    console.error(error);
+                                })
+                        })
+                    })
+            })
+        }).then(function () {
+            console.log('1');
         })
 
-        req.body.guestPlayers.forEach(function (element, index, array) {
-            query = client.query("INSERT INTO individual(player_id, match_id, rating, red_cards, yellow_cards," +
-                " in_host_team) VALUES ('" + element.id + "', '" + match_id + "', '" +
-                element.rating + "', '" + element.red_cards + "', '" + element.yellow_cards + "', " + false + ")");
-        })
-    })
+//same for guest team and look at triggers
+
 
     res.end();
 
-};
+}
+;
 
 app.get('/api/:entity', getData);
 app.get('/api/:entity/:col/:param', getDataParams);
