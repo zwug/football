@@ -12,7 +12,7 @@ function matchController($http, $scope, $filter) {
     this.getData = function () {
         $http.get('/api/match/').
             success(function (data) {
-                $scope.tournament = ['UEFA Champions League'];
+                $scope.tournament = ['UEFA Champions League', 'BBVA La Liga'];
                 data.result.forEach(function (element, index, array) {
                     if ($scope.tournament.indexOf(element.tournament) == -1) {
                         $scope.tournament[index] = element.tournament;
@@ -76,27 +76,27 @@ function matchController($http, $scope, $filter) {
     }
 
     this.submit = function () {
-        // if (this.selectedTournament && this.date && this.host && this.guest) {
-        var hostWin = "no";
-        if (this.scoreGuest < this.scoreHost) {
-            hostWin = "yes";
+        if (this.selectedTournament && this.date && this.host && this.guest) {
+            var hostWin = "no";
+            if (this.scoreGuest < this.scoreHost) {
+                hostWin = "yes";
+            }
+            else if (this.scoreGuest == this.scoreHost) {
+                hostWin = "tie";
+            }
+            var matchParams = {
+                tournament: this.selectedTournament,
+                matchDate: $filter('date')(this.date, 'yyyy-MM-dd'),
+                teamHost: this.host,
+                teamGuest: this.guest,
+                hostWin: hostWin,
+                guestPlayers: $scope.GuestPlayers,
+                hostPlayers: $scope.HostPlayers
+            }
+            $http.post('/api/add_match', matchParams).success(function () {
+                console.log("success");
+            });
         }
-        else if (this.scoreGuest == this.scoreHost) {
-            hostWin = "tie";
-        }
-        var matchParams = {
-            tournament: this.selectedTournament,
-            matchDate: $filter('date')(this.date, 'yyyy-MM-dd'),
-            teamHost: this.host,
-            teamGuest: this.guest,
-            hostWin: hostWin,
-            guestPlayers: $scope.GuestPlayers,
-            hostPlayers: $scope.HostPlayers
-        }
-        $http.post('/api/add_match', matchParams).success(function () {
-            console.log("success");
-        });
-        //}
     }
 
     this.getTeams();

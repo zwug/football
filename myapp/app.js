@@ -58,31 +58,66 @@ app.get('/', function (req, res) {
 });
 
 app.get('/goals', function (req, res) {
-    pg.select().table('player').orderBy('goals_scored', 'desc')
-        .then(function (output) {
-        res.render('goals.ejs',
-            {goalsArr: output }
-        );
-    })
-});
 
-app.get('/ftable', function (req, res) {
-    var query = client.query("select table1.tournament as competition, table1.date as date, table1.host_win as host_win, " +
-    " table1.name as host, table2.name as guest from " +
-    "(SELECT * FROM match LEFT JOIN football_club on match.host_team_id = football_club.club_id) as table1" +
-    " inner join " +
-    "(SELECT * FROM match LEFT JOIN football_club on match.guest_team_id = football_club.club_id) as table2" +
-    " on table1.id = table2.id");
+    var query = client.query("select * from (SELECT    player.first_name, player.last_name, player.country,       " +
+        " count(goals.id) AS goals_total  " +
+        "  FROM (individual    " +
+        "left JOIN (SELECT * from goals WHERE is_own = FALSE )as goals   " +
+        " ON individual.id = goals.individual_id) right JOIN player ON player_id = player.id" +
+        "    GROUP BY player.id ORDER BY goals_total DESC)as result WHERE goals_total > 0");
+
     query.on("row", function (row, result) {
         result.addRow(row);
     });
     query.on("end", function (result) {
-        res.render('table.ejs',
+        console.log(result.rows);
+        res.render('goals.ejs',
             {goalsArr: result.rows }
         );
-        console.log(result.rows);
     });
+});
 
+app.get('/ftable', function (req, res) {
+    var teamsArr = [];
+    var query = client.query("Select * from (select table1.tournament as competition, table1.date as date, table1.host_win as host_win, " +
+        " table1.name as host, table2.name as guest from " +
+        "(SELECT * FROM match LEFT JOIN football_club on match.host_team_id = football_club.club_id) as table1" +
+        " inner join " +
+        "(SELECT * FROM match LEFT JOIN football_club on match.guest_team_id = football_club.club_id) as table2" +
+        " on table1.id = table2.id)as result where competition = 'BBVA La Liga'");
+    query.on("row", function (row, result) {
+        result.addRow(row);
+
+        if (!teamsArr[row.host]) {
+            teamsArr[row.host] = 0;
+        }
+        if (!teamsArr[row.guest]) {
+            teamsArr[row.guest] = 0;
+        }
+
+        if (row.host_win === 'yes') {
+            teamsArr[row.host] += 3;
+        }
+        else if (row.host_win === 'no ') {
+            teamsArr[row.guest] += 3;
+        }
+        else {
+            teamsArr[row.host] += 1;
+            teamsArr[row.guest] += 1;
+        }
+    });
+    query.on("end", function (result) {
+        var sortable = [];
+        for (var vehicle in teamsArr)
+            sortable.push([vehicle, teamsArr[vehicle]])
+        sortable.sort(function (a, b) {
+            return b[1] - a[1]
+        });
+
+        res.render('table.ejs',
+            {goalsArr: sortable
+            });
+    });
 });
 
 
@@ -96,7 +131,6 @@ function getData(req, res) {
             result: result.rows
         });
     });
-
 };
 
 function getDataParams(req, res) {
@@ -109,7 +143,6 @@ function getDataParams(req, res) {
             result: result.rows
         });
     });
-
 };
 
 function playersIn(req, res) {
@@ -126,7 +159,6 @@ function playersIn(req, res) {
             result: result.rows
         });
     });
-
 };
 
 function addMatch(req, res) {
@@ -169,12 +201,6 @@ function addMatch(req, res) {
         }).then(function () {
             var query = client.query("update goals set is_penalty =  FALSE where is_penalty = FALSE");
         })
-
-//triggers have odd behaviour
-
-    // var query = client.query("update goals set is_penalty =  FALSE where is_penalty = FALSE");
-    //res.end();
-
 };
 
 app.get('/api/:entity', getData);
